@@ -1,6 +1,7 @@
 """
-Krypto-Alarmsystem: Top 30 nach Marktkap, sendet Telegram-Nachricht bei
-auffälligen Signalen (RSI-Extreme, Volumen-Spikes, Nähe zu 7-Tage-Levels).
+Krypto-Alarmsystem: Top 30 nach Marktkap (ohne Stablecoins), sendet
+Telegram-Nachricht bei auffälligen Signalen (RSI-Extreme, Volumen-Spikes,
+Nähe zu 7-Tage-Levels).
 
 Läuft eigenständig (z.B. per GitHub Actions Cronjob) - braucht keinen
 Server, nur die zwei Umgebungsvariablen TELEGRAM_BOT_TOKEN und
@@ -15,8 +16,16 @@ import requests
 # Konfiguration - hier kannst du die Kriterien anpassen
 # ---------------------------------------------------------------------------
 
-TOP_N = 30
+TOP_N = 30           # so viele "echte" Coins sollen am Ende geprueft werden
+FETCH_N = 50         # es wird mehr abgerufen, weil Stablecoins rausgefiltert werden
 RSI_PERIOD = 14
+
+# Symbole, die als Stablecoins gelten und ausgeschlossen werden (Kleinschreibung)
+STABLECOIN_SYMBOLS = {
+    "usdt", "usdc", "dai", "fdusd", "usde", "tusd", "usdd", "frax",
+    "gusd", "usds", "pyusd", "busd", "eurs", "usdy", "usdp", "susd",
+    "lusd", "crvusd", "eure",
+}
 RSI_OVERBOUGHT = 72
 RSI_OVERSOLD = 28
 CHANGE_24H_STRONG = 8.0      # % - starke Bewegung
@@ -37,7 +46,7 @@ WATCHLIST = {"bitcoin", "ethereum", "ripple", "solana", "hyperliquid"}
 COINGECKO_URL = (
     "https://api.coingecko.com/api/v3/coins/markets"
     "?vs_currency=usd&order=market_cap_desc"
-    f"&per_page={TOP_N}&page=1&sparkline=true"
+    f"&per_page={FETCH_N}&page=1&sparkline=true"
     "&price_change_percentage=1h,24h,7d"
 )
 
@@ -124,7 +133,11 @@ def build_signals(coin):
 def fetch_coins():
     resp = requests.get(COINGECKO_URL, timeout=20)
     resp.raise_for_status()
-    return resp.json()
+    coins = resp.json()
+
+    # Stablecoins raus, dann auf TOP_N "echte" Coins begrenzen
+    filtered = [c for c in coins if c.get("symbol", "").lower() not in STABLECOIN_SYMBOLS]
+    return filtered[:TOP_N]
 
 
 def build_message(rows):
