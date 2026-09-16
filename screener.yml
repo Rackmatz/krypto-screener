@@ -1,0 +1,29 @@
+name: Krypto Screener
+
+on:
+  schedule:
+    # alle 30 Minuten - bei privatem Repo ggf. auf stuendlich (0 * * * *)
+    # aendern, um das kostenlose Actions-Kontingent zu schonen
+    - cron: "*/30 * * * *"
+  workflow_dispatch: {}   # erlaubt manuellen Start über den "Run workflow"-Button
+
+jobs:
+  check-market:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Repo auschecken
+        uses: actions/checkout@v4
+
+      - name: Python einrichten
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Abhaengigkeiten installieren
+        run: pip install requests
+
+      - name: Screener ausfuehren
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: python crypto_alert.py
