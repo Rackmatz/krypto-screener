@@ -41,7 +41,7 @@ ALWAYS_SEND = False
 
 MAX_COINS_IN_MESSAGE = 10
 
-WATCHLIST = {"bitcoin", "ethereum", "ripple", "solana", "hyperliquid"}
+WATCHLIST = {"bitcoin", "ethereum", "ripple", "solana", "hyperliquid", "harmony"}
 
 COINGECKO_URL = (
     "https://api.coingecko.com/api/v3/coins/markets"
